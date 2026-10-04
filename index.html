@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f6f7">
+<title>تخمين كروبات العملي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f6f7;--ink:#18181b;--mut:#8a8a93;--card:#fff;--line:#ebebee;--err:#e5484d}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Tajawal',system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif;
+  background:var(--bg);color:var(--ink);
+  display:flex;justify-content:center;align-items:center;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+}
+main{width:100%;max-width:310px;text-align:center}
+
+.note{font-size:11.5px;color:var(--mut);margin-bottom:22px;line-height:1.7}
+h1{font-size:21px;font-weight:700;letter-spacing:-.2px}
+.sub{margin-top:6px;font-size:13px;color:var(--mut);font-weight:500}
+
+.grid{
+  position:relative;margin-top:22px;padding:8px;
+  display:grid;grid-template-columns:repeat(5,1fr);gap:6px;
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+}
+.chip{
+  position:relative;z-index:1;height:38px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13.5px;color:#55555e;transition:color .2s;
+}
+.chip.err{grid-column:span 2;color:var(--err)}
+.chip.on{color:#fff}
+
+#lens{
+  position:absolute;top:0;left:0;z-index:0;border-radius:11px;opacity:0;
+  background:var(--ink);will-change:transform;
+  transition:transform .08s ease-out,width .08s,height .08s,opacity .25s,background .25s;
+}
+#lens.err{background:var(--err)}
+
+button{
+  margin-top:14px;width:100%;padding:12px;border:0;border-radius:14px;cursor:pointer;
+  font:700 15px 'Tajawal',system-ui,sans-serif;color:#fff;background:var(--ink);
+  transition:transform .15s,opacity .2s;
+}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+.result{
+  margin-top:16px;font-size:13.5px;line-height:1.8;font-weight:500;color:#55555e;
+  opacity:0;transform:translateY(6px);visibility:hidden;
+  transition:opacity .4s,transform .4s,visibility 0s .4s;
+}
+.result.show{opacity:1;transform:none;visibility:visible;transition-delay:0s}
+.result b{display:block;color:var(--err);font-size:13px;margin-bottom:2px}
+
+[hidden]{display:none!important}
+.picks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:22px}
+button.opt{margin:0;padding:18px 0;font-size:22px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:16px}
+button.opt:active{background:var(--ink);color:#fff}
+button.mine{width:auto;margin:18px 0 0;padding:6px 14px;font-size:13px;font-weight:500;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:99px}
+button.mine b{color:var(--ink);font-weight:700}
+.mine+.grid{margin-top:10px}
+.credit{margin-top:22px;font-size:12px;font-weight:500;color:var(--mut)}
+.chip.hit{animation:hit .45s}
+@keyframes hit{25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+
+<audio id="bg" src="https://files.catbox.moe/058ihh.mp3" loop autoplay preload="auto" playsinline></audio>
+
+<main>
+  <section id="pick" hidden>
+    <h1>تخمين كروبات العملي</h1>
+    <p class="sub">اختر كروبك للمتابعة</p>
+    <div class="picks">
+      <button class="opt" type="button" data-g="A">A</button>
+      <button class="opt" type="button" data-g="B">B</button>
+      <button class="opt" type="button" data-g="C">C</button>
+    </div>
+  </section>
+
+  <section id="lotto" hidden>
+  <p class="note">نعتذر عن ذكر C1, C2 لأمور خارجة عن إرادتنا</p>
+  <h1>تخمين كروبات العملي</h1>
+  <p class="sub">أي كروب راح ياخذ باجر؟</p>
+
+  <button class="mine" id="mine" type="button">كروبك: <b id="mg"></b></button>
+  <div class="grid" id="grid">
+    <div id="lens"></div>
+    <div class="chip" data-g="A1">A1</div><div class="chip" data-g="A2">A2</div>
+    <div class="chip" data-g="A3">A3</div><div class="chip" data-g="A4">A4</div>
+    <div class="chip" data-g="A5">A5</div>
+    <div class="chip" data-g="B1">B1</div><div class="chip" data-g="B2">B2</div>
+    <div class="chip" data-g="B3">B3</div><div class="chip" data-g="B4">B4</div>
+    <div class="chip" data-g="B5">B5</div>
+    <div class="chip" data-g="C3">C3</div><div class="chip" data-g="C4">C4</div>
+    <div class="chip" data-g="C5">C5</div>
+    <div class="chip err" data-g="Error">Error</div>
+  </div>
+
+  <button id="go" type="button">ابدأ القرعة</button>
+
+  <div class="result" id="res" aria-live="polite">
+    <b>للأسف </b>
+    لقد عجز كُل سحرة ومشعوذين معبد آمون عن تخمين الكروبات ليوم غد 
+  </div>
+  <p class="credit">عبدالرحمن حسن</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  /* الصوت: تشغيل تلقائي بلا أي واجهة */
+  const a = document.getElementById('bg');
+  a.volume = .85;
+  const evs = ['pointerdown','pointerup','touchend','click','keydown'];
+  const unlock = () => {
+    a.muted = false;
+    if (a.paused) a.play().catch(()=>{});
+    if (!a.paused && !a.muted) evs.forEach(e => window.removeEventListener(e, unlock, true));
+  };
+  const boot = () => {
+    a.muted = false;
+    a.play().catch(() => { a.muted = true; a.play().catch(()=>{}); });
+  };
+  evs.forEach(e => window.addEventListener(e, unlock, true));
+  boot();
+  addEventListener('load', boot);
+  addEventListener('pageshow', boot);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && a.paused) boot(); });
+
+  /* اختيار كروب الطالب */
+  const KEY = 'student_group', pick = document.getElementById('pick'), lotto = document.getElementById('lotto');
+  const mg = document.getElementById('mg');
+  let g = null;
+  try { g = localStorage.getItem(KEY); } catch (e) {}
+  if (!['A', 'B', 'C'].includes(g)) g = null;
+  const show = () => { pick.hidden = !!g; lotto.hidden = !g; if (g) mg.textContent = g; };
+  document.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => {
+    g = b.dataset.g;
+    try { localStorage.setItem(KEY, g); } catch (e) {}
+    show();
+  }));
+  document.getElementById('mine').addEventListener('click', () => {
+    if (busy) return;
+    g = null;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    show();
+  });
+
+  /* القرعة */
+  const grid = document.getElementById('grid'), lens = document.getElementById('lens');
+  const cards = [...grid.querySelectorAll('.chip')];
+  const btn = document.getElementById('go'), res = document.getElementById('res');
+  const N = cards.length, last = N - 1;
+  let cur = -1, busy = false;
+
+  const place = (i, ms) => {
+    const c = cards[i];
+    lens.style.transitionDuration = ms == null ? '' : ms + 'ms';
+    lens.style.width = c.offsetWidth + 'px';
+    lens.style.height = c.offsetHeight + 'px';
+    lens.style.transform = `translate(${c.offsetLeft}px,${c.offsetTop}px)`;
+    lens.classList.toggle('err', c.dataset.g === 'Error');
+    cards.forEach((x, j) => x.classList.toggle('on', j === i));
+    cur = i;
+  };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  async function spin() {
+    if (busy) return;
+    busy = true;
+    btn.disabled = true; btn.textContent = 'جاري التخمين…';
+    res.classList.remove('show');
+    cards.forEach(c => c.classList.remove('hit'));
+    if (cur < 0) { place(0, 0); lens.style.opacity = 1; await sleep(60); }
+
+    // في كل قرعة: نمط انتقال، عدد خطوات، وإيقاع مختلفان
+    const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+    const mode = ['jump', 'sweep', 'mixed'][rnd(0, 2)];
+    const total = rnd(16, 32);
+    const base = rnd(40, 75), range = rnd(240, 400), curve = 2 + Math.random() * 2;
+    let dir = Math.random() < .5 ? 1 : -1;
+    let i = Math.max(cur, 0);
+
+    for (let k = 1; k < total; k++) {
+      let n;
+      if (mode === 'sweep' || (mode === 'mixed' && Math.random() < .5)) {
+        if (Math.random() < .12) dir = -dir;
+        n = (i + dir + N) % N;
+      } else {
+        do { n = rnd(0, N - 1); } while (n === i);
+      }
+      if (n === last) n = (n + rnd(1, N - 2)) % N;   // لا نهبط على Error قبل النهاية
+      i = n;
+      const d = base + Math.pow(k / total, curve) * range;
+      place(i, d * .9);
+      await sleep(d);
+    }
+    place(last, 200);
+    cards[last].classList.add('hit');
+    if (navigator.vibrate) navigator.vibrate([30, 40, 60]);
+    await sleep(350);
+    res.classList.add('show');
+    btn.disabled = false; btn.textContent = 'أعد القرعة';
+    busy = false;
+  }
+  btn.addEventListener('click', spin);
+  show();
+  addEventListener('resize', () => { if (cur >= 0) place(cur, 0); });
+})();
+</script>
+</body>
+</html>
